@@ -1,20 +1,18 @@
-# voz.py — Entrada de voz integrada
-import sounddevice as sd
-import scipy.io.wavfile
-import tempfile
-import whisper
-import os
+import streamlit as st
+from voz import transcrever_audio_arquivo
 
-def capturar_audio_e_transcrever(duracao=5):
-    fs = 44100
-    gravacao = sd.rec(int(duracao * fs), samplerate=fs, channels=1)
-    sd.wait()
+st.title("🎙️ Transcrição de Áudio com Avelyn")
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmpfile:
-        caminho_audio = tmpfile.name
-        scipy.io.wavfile.write(caminho_audio, fs, gravacao)
+arquivo_audio = st.file_uploader("Envie um áudio .wav", type=["wav"])
 
-    modelo = whisper.load_model("base")
-    resultado = modelo.transcribe(caminho_audio)
-    os.remove(caminho_audio)
-    return resultado["text"]
+if arquivo_audio:
+    with open("temp_audio.wav", "wb") as f:
+        f.write(arquivo_audio.read())
+
+    with st.spinner("Transcrevendo..."):
+        try:
+            texto = transcrever_audio_arquivo("temp_audio.wav")
+            st.success("🧾 Transcrição:")
+            st.write(texto)
+        except Exception as e:
+            st.error(f"Erro: {e}")
